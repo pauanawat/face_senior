@@ -8,6 +8,19 @@ In the project directory, you can run:
 
 You can change process scale in line 8
 
-### `python save.py` 
+### `python saveEmbeded.py` 
 
-Change file name in line 11 and name in line 20 before run
+first, delete data in /storeEmbedding/embedding.npy and name.npy .
+second, add your picture in /picture/store and set file name <<name>>.jpg .
+finally, run this command
+
+### `python saveGT.py`
+
+Before you test your picture, you must save ground truth.
+first, delete data in gt.npy .
+second, add your test picture in picture/forTest and set file name <<name>>.jpg .
+finally, run this command
+
+### `python test.py`
+
+Test detection and recognition all picture in /forTest with scale 1, 0.5 and 0.25 

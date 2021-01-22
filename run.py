@@ -5,7 +5,7 @@ from scipy.spatial.distance import cdist
 from faceDetectorAndAlignment import faceDetectorAndAlignment
 from faceEmbeddingExtractor import faceEmbeddingExtractor
 inputStream = cv2.VideoCapture(0)
-detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.1)
+detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.5)
 embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
 ### load data
 faces = np.load('./storeEmbedding/embedding.npy', allow_pickle=True)
@@ -20,21 +20,19 @@ while True:
             extractEmbedding = embeddingExtractor.extract(alignedFaces)
             # Compare embedding
             distance = cdist(faces, extractEmbedding)
+            distance = distance.reshape(distance.shape[1],distance.shape[0])
             ### Draw face ##
             for faceIdx, faceBox in enumerate(faceBoxes):
                 x1, y1, x2, y2 = faceBox[0:4].astype(np.int)
-                dis_face = distance[faceIdx]
+                cv2.rectangle(inputFrame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 ### find min distance
-                # if have 1 face
-                if distance.shape[1] == 1:
-                    dis_face = distance
-                if np.min(dis_face) < 0.9:
-                    # print(np.min(dis_face))
+                dis_face = distance[faceIdx]
+                # print(dis_face)
+                if np.min(dis_face) < 1:
+                    ### Draw owner
                     owner = name[np.where(dis_face == np.min(dis_face))[0]][0]
-                    cv2.putText(inputFrame, owner, (x1,y1-5), cv2.FONT_HERSHEY_COMPLEX, 0.7,(255,255,255),2)
-                    cv2.rectangle(inputFrame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    crop_face = (x2-x1) * (y2-y1)
-                    print('owner:',owner,', min distance:',np.min(dis_face),', crop size:',crop_face)
+                    print(owner)
+                    cv2.putText(inputFrame, owner, (x1,y1-5), cv2.FONT_HERSHEY_COMPLEX, 0.7,(255,255,255),2)                   
         cv2.imshow('Video Frame', inputFrame)
         if cv2.waitKey(1) == ord('q'):
             break
