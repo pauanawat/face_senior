@@ -4,8 +4,9 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from faceDetectorAndAlignment import faceDetectorAndAlignment
 from faceEmbeddingExtractor import faceEmbeddingExtractor
+### camera ???
 inputStream = cv2.VideoCapture(0)
-detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.5)
+detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=1)
 embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
 ### load data
 faces = np.load('./storeEmbedding/embedding.npy', allow_pickle=True)
@@ -28,11 +29,13 @@ while True:
                 ### find min distance
                 dis_face = distance[faceIdx]
                 # print(dis_face)
-                if np.min(dis_face) < 1:
+                if np.min(dis_face) < 0.9:
                     ### Draw owner
                     owner = name[np.where(dis_face == np.min(dis_face))[0]][0]
                     print(owner)
-                    cv2.putText(inputFrame, owner, (x1,y1-5), cv2.FONT_HERSHEY_COMPLEX, 0.7,(255,255,255),2)                   
+                    cv2.putText(inputFrame, owner, (x1,y1-5), cv2.FONT_HERSHEY_COMPLEX, 0.7,(255,255,255),2)   
+                else:
+                    cv2.putText(inputFrame, 'Unknowed', (x1,y1-5), cv2.FONT_HERSHEY_COMPLEX, 0.7,(255,255,255),2)   
         cv2.imshow('Video Frame', inputFrame)
         if cv2.waitKey(1) == ord('q'):
             break

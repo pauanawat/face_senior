@@ -12,14 +12,15 @@ directory = './picture/forTest'
 count = True
 for picName in os.listdir(directory):
     name = picName[:-4] 
-    print(name)
+    # print(name)
     ### Store 
     img = cv2.imread(directory+'/'+picName)
     faceBoxes, faceLandmarks, alignedFaces = detector.detect(img)
     extractEmbedding = embeddingExtractor.extract(alignedFaces)
     for faceIdx, faceBox in enumerate(faceBoxes):
         x1, y1, x2, y2 = faceBox[0:4].astype(np.int)
-        print(x1,x2,y1,y2)
+        # print(x1,x2,y1,y2)
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
         ### gt is ground truth
         if count :
             gt = []
@@ -28,4 +29,7 @@ for picName in os.listdir(directory):
         gt = np.append(gt, [x1,y1,x2,y2])
         np.save('./gt.npy', gt)
         count = False
+        os.chdir('./picture/GT_forTest')
+        cv2.imwrite(picName,img)
+        os.chdir('../../')
 
