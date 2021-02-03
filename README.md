@@ -10,15 +10,15 @@ You can change process scale in line 8
 
 ### `python saveEmbeded.py` 
 
-first, delete data in /storeEmbedding/embedding.npy and name.npy .
-second, add your picture in /picture/store and set file name <<name>>.jpg .
+first, delete data in /storeEmbedding/embedding.npy and name.npy <br />
+second, add your picture in /picture/store and set file name  `name`.jpg <br />
 finally, run this command
 
 ### `python saveGT.py`
 
-Before you test your picture, you must save ground truth.
-first, delete data in gt.npy .
-second, add your test picture in picture/forTest and set file name <<name>>.jpg .
+Before you test your picture, you must save ground truth <br />
+first, delete data in gt.npy <br />
+second, add your test picture in picture/forTest and set file name `name`.jpg <br />
 finally, run this command
 
 ### `python test.py`
