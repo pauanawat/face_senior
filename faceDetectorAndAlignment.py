@@ -114,7 +114,8 @@ class faceDetectorAndAlignment:
 
         if self.processScale !=1:
             processFrame = cv2.resize(inputFrame,None, fx=self.processScale, fy=self.processScale)
-
+        else:
+            processFrame = inputFrame
         h, w = processFrame.shape[0], processFrame.shape[1]
         (hNew, wNew), (ratioH, ratioW) = self.calcImageScale(h, w)
 

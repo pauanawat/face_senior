@@ -1,12 +1,16 @@
 import onnxruntime as rt
 import cv2
 import numpy as np
+import warnings
 from scipy.spatial.distance import cdist
 from faceDetectorAndAlignment import faceDetectorAndAlignment
 from faceEmbeddingExtractor import faceEmbeddingExtractor
-### camera ???
-inputStream = cv2.VideoCapture(0)
-detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=1)
+
+warnings.filterwarnings("ignore")
+
+### camera
+inputStream = cv2.VideoCapture('http://192.168.1.37:8080/video')
+detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.5)
 embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
 ### load data
 faces = np.load('./storeEmbedding/embedding.npy', allow_pickle=True)

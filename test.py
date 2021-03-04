@@ -4,12 +4,11 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
+import warnings
 from scipy.spatial.distance import cdist
 from faceDetectorAndAlignment import faceDetectorAndAlignment
 from faceEmbeddingExtractor import faceEmbeddingExtractor
-inputStream = cv2.VideoCapture(0)
-detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.35)
-embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
+
 ### load store data
 faces = np.load('./storeEmbedding/embedding.npy', allow_pickle=True)
 names = np.load('./storeEmbedding/name.npy', allow_pickle=True)
@@ -18,34 +17,37 @@ faces = faces.reshape((names.shape[0],512))
 gt = gt.reshape((names.shape[0],4))
 
 directory = './picture/forTest'
+warnings.filterwarnings("ignore")
 
 def intersection_over_union(boxA, boxB):
-	# determine the (x, y)-coordinates of the intersection rectangle
-	xA = max(boxA[0], boxB[0])
-	yA = max(boxA[1], boxB[1])
-	xB = min(boxA[2], boxB[2])
-	yB = min(boxA[3], boxB[3])
-	# compute the area of intersection rectangle
-	interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-	# compute the area of both the prediction and ground-truth
-	# rectangles
-	boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
-	boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
-	# compute the intersection over union by taking the intersection
-	# area and dividing it by the sum of prediction + ground-truth
-	# areas - the interesection area
-	iou = interArea / float(boxAArea + boxBArea - interArea)
-	# return the intersection over union value
-	return iou
+    # determine the (x, y)-coordinates of the intersection rectangle
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+    # compute the area of intersection rectangle
+    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    # compute the area of both the prediction and ground-truth
+    # rectangles
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+    # compute the intersection over union by taking the intersection
+    # area and dividing it by the sum of prediction + ground-truth
+    # areas - the interesection area
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+    # return the intersection over union value
+    return iou
 
-list_scale = []
+
+detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=0.35)
+embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
+
 face_scale = []
 
-for i in range(12):
+for i in range(13):
     scale = 0.7 ** (i)
     print('scale:', scale)
     count = 0
-    list_pic = []
     list_face = []
     for picName in os.listdir(directory):
         name = picName[:-4]
@@ -84,49 +86,18 @@ for i in range(12):
                 owner = names[np.where(dis_face == np.min(dis_face))[0]][0]
                 if owner==name:
                     # print('recognition correct')
-                    list_pic.append((width, iou, np.min(dis_face)))
                     list_face.append((widthGT, iou, np.min(dis_face)))
                 else:
                     # print('recognition fail and it recog to',owner)
-                    list_pic.append((width, iou, 1.4))
                     list_face.append((widthGT, iou, 1.4))
             else:
                 # print(name,'can not recog and min distance =',np.min(dis_face),'recog to',names[np.where(dis_face == np.min(dis_face))[0]][0])
-                list_pic.append((width, iou, np.min(dis_face)))
                 list_face.append((widthGT, iou, np.min(dis_face)))
         else:
             # print(name, ', img size:', width, 'x', height, 'can not detect')
-            list_pic.append((width, 0, 1.4))
             list_face.append((widthGT, 0, 1.4))
         count+=1
-    list_scale.append(list_pic)
     face_scale.append(list_face)
-
-### format data image
-sizes = {}
-size = []
-detect = []
-recog = []
-
-for ls in list_scale:
-    for data in ls:
-        if data[0] in sizes:
-            # data [ size(pixel), iou, distance ]
-            # sizes [size(pixel)] = [number, iou, distance ]
-            sizes[data[0]][1] = (sizes[data[0]][1] * sizes[data[0]][0] + data[1]) / (sizes[data[0]][0]+1) 
-            sizes[data[0]][2] = (sizes[data[0]][2] * sizes[data[0]][0] + data[2]) / (sizes[data[0]][0]+1) 
-            sizes[data[0]][0] += 1
-        else:
-            sizes[data[0]] = [1, data[1], data[2]]
-for size_in_dict in sizes.keys():
-    size.append(size_in_dict)
-size = sorted(size)
-for size_in_list in size:
-    detect.append(sizes[size_in_list][1])
-    recog.append(sizes[size_in_list][2])  
-size = np.array(size)
-detect = np.array(detect)
-recog = np.array(recog)
 
 ### format data face
 sizes_face = {}
@@ -153,38 +124,26 @@ detect_face = np.array(detect_face)
 recog_face = np.array(recog_face)
 
 ### save to excel
-# image
-data = []
-for i in range(len(size)):
-    data.append([size[i], detect[i], recog[i]])
-df = pd.DataFrame (data, columns=['size','IoU','min distance'])
-df.to_excel('result_image2.xlsx')
 # face
 data = []
 for i in range(len(size_face)):
     data.append([size_face[i], detect_face[i], recog_face[i]])
 df = pd.DataFrame (data, columns=['size','IoU','min distance'])
-df.to_excel('result_face2.xlsx')
+df.to_excel('test0.35.xlsx')
 
 ### plot graph
-graph = [detect, detect_face, recog, recog_face]
-labels = ["IoU", "IoU", "distance", "distance"]
-colors = ["b", "g", "b","g"]
+graph = [detect_face, recog_face]
+labels = ["IoU", "distance"]
+colors = ["b", "g"]
 
-f,axs = plt.subplots(2,2)
+f,axs = plt.subplots(2)
 
 # ---- loop over axes ----
 for i,ax in enumerate(axs.flat):
-    if i==0 or i==2:
-        x = size
-    else:
-        x = size_face
+    x = size_face
     ax.plot(x, graph[i],color=colors[i],label=labels[i])
+    ax.set_xlim(500, 0)
     ax.grid()
     ax.legend(loc="upper right")
-    if i==0:
-        ax.set_title('image')
-    elif i==1:
-        ax.set_title('face')
-plt.setp(axs[-1, :], xlabel='size (pixel)')
+plt.setp(axs[-1], xlabel='size (pixel)')
 plt.show()

@@ -2,12 +2,13 @@ import onnxruntime as rt
 import cv2
 import numpy as np
 import os
+import warnings
 from scipy.spatial.distance import cdist
 from faceDetectorAndAlignment import faceDetectorAndAlignment
 from faceEmbeddingExtractor import faceEmbeddingExtractor
 detector = faceDetectorAndAlignment('models/faceDetector.onnx', processScale=1)
 embeddingExtractor = faceEmbeddingExtractor('models/r100-fast-dynamic.onnx')
-
+warnings.filterwarnings("ignore")
 directory = './picture/store'
 count = True
 for picName in os.listdir(directory):
@@ -18,8 +19,10 @@ for picName in os.listdir(directory):
     faceBoxes, faceLandmarks, alignedFaces = detector.detect(img)
     extractEmbedding = embeddingExtractor.extract(alignedFaces)
     for faceIdx, faceBox in enumerate(faceBoxes):
+        if faceIdx>0:
+            print('has more than one face')
         x1, y1, x2, y2 = faceBox[0:4].astype(np.int)
-        print('detect crop size:',x2-x1,'x',y2-y1)
+        # print('detect crop size:',x2-x1,'x',y2-y1)
     if count :
         embed = []
         names = []
